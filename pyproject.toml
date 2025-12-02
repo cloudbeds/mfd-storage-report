@@ -1,0 +1,63 @@
+[tool.poetry]
+name = "python-restapi-template"
+version = "0.1.0"
+description = "Cloudbeds python rest api template"
+authors = [
+    "Insights Squad",
+]
+license = "MIT"
+readme = "README.md"
+packages = []
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "0.100.0"
+pydantic = "2.0.2"
+pydantic-settings = "2.0.1"
+uvicorn = "0.23.2"
+httpx = "0.23.3"
+pyjwt = "2.8.0"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "3.3.3"
+pytest-mock = "3.10.0"
+pytest = "7.1.3"
+pytest-asyncio = "0.21.0"
+coverage = { version = "7.2.7", extras = ["toml"] }
+mypy = "0.982"
+ruff = "0.0.270"
+black =  "23.3.0"
+isort = "5.12.0"
+
+[project.urls]
+Homepage = "https://github.com/cloudbeds/python-restapi-template"
+Documentation = "https://github.com/cloudbeds/python-restapi-template"
+
+[tool.coverage.run]
+branch = true
+source= ["app", "tests/unit"]
+
+[tool.coverage.report]
+fail_under = 90.00
+precision = 2
+
+[tool.isort]
+profile = "black"
+
+[tool.ruff]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C408",  # unnecessary `dict` call (rewrite as a literal)
+]

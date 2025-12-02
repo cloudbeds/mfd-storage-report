@@ -1,0 +1,59 @@
+name: Re-tag images and Push
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+
+  re-tag:
+    if: 0 # remove this line to enable this job
+    name: Re-tag images
+    runs-on: x1-core
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      # Application Image
+      - name: Re-tag application image
+        uses: cloudbeds/composite-actions/docker/crane-re-tag/aws-ecr@v2
+        with:
+          image_name: ${{ github.event.repository.name }}
+          src_tag: ${{ github.sha }}
+          dst_tag: ${{ github.ref_name }}
+
+  update-deployment:
+    if: 0 # remove this line to enable this job
+    name: Triggers action to update ArgoCD application deployment manifest with new image tag
+    needs: re-tag
+    runs-on: x1-core
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+
+      - name: Get GH app token
+        id: gh-app-token
+        uses: cloudbeds/composite-actions/gh-app-token@v2
+        with:
+          # replace <argocd-replace-with-your-repo> with the name of the argocd-repo that deploys your app
+          repositories: >-
+            ["<argocd-replace-with-your-repo>"]
+          # replace <placeholders with your project/squad GH app details>
+          app_name: <github-app-name>
+
+      - name: Update application on production cluster
+        uses: cloudbeds/trigger-workflow-and-wait@v1.6.5
+        with:
+          owner: cloudbeds
+          repo: argocd-${REPLACE_ME_WITH_YOUR_ARGO}
+          github_token: ${{ steps.gh-app-token.outputs.github-token }}
+          workflow_file_name: update-application.yaml
+          client_payload: | 
+            {
+              "cluster": "prod-ga", 
+              "app_name": "${{ github.event.repository.name }}", 
+              "image_tag": "${{ github.ref_name }}" 
+            }

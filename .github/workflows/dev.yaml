@@ -1,0 +1,86 @@
+name: Test, Build, and Publish to Dev Environment
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - dev
+
+jobs:
+  run-code-lint:
+    name: Code Lint 🧹
+    runs-on: default
+    steps:
+      - uses: actions/checkout@v5
+        name: Checkout Repo
+      - uses: ./.github/actions/code-lint
+        name: Code Lint
+
+  run-unit-tests:
+    name: Unit Testing 🧪
+    runs-on: default
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+
+      - name: Get GH app token
+        id: gh-app-token
+        uses: cloudbeds/composite-actions/gh-app-token@v2
+        with:
+          # replace <argocd-replace-with-your-repo> with the name of the argocd-repo that deploys your app
+          repositories: >-
+            ["<argocd-replace-with-your-repo>"]
+          # replace <placeholders with your project/squad GH app details>
+          app_name: <github-app-name>
+
+      - uses: actions/checkout@v5
+        name: Checkout Repo
+
+      - uses: ./.github/actions/unit-tests
+        name: Run Unit Tests
+        env:
+          GITHUB_ACCESS_TOKEN: ${{ steps.gh-app-token.outputs.github-token }}
+
+  build-push:
+    if: 0 # remove this line to enable this job
+    name: Build and push image 🧱
+    needs:
+      - "run-unit-tests"
+      - "run-code-lint"
+    uses: ./.github/workflows/docker-build.yaml
+    secrets: inherit
+    with:
+      push: true
+
+  update-deployment:
+    if: 0 # remove this line to enable this job
+    name: Update Deployment Manifest Image Tag 📜
+    needs: build-push
+    runs-on: x1-core
+    steps:
+
+      - name: Get GH app token
+        id: gh-app-token
+        uses: cloudbeds/composite-actions/gh-app-token@v2
+        with:
+          # replace <argocd-replace-with-your-repo> with the name of the argocd-repo that deploys your app
+          repositories: >-
+            ["<argocd-replace-with-your-repo>"]
+          # replace <placeholders with your project/squad GH app details>
+          app_name: <github-app-name>
+
+      - name: Update application on develop cluster
+        uses: cloudbeds/trigger-workflow-and-wait@v1.6.5
+        with:
+          owner: cloudbeds
+          repo: argo-${REPLACE_ME_WITH_YOUR_ARGO}
+          github_token: ${{ steps.gh-app-token.outputs.github-token }}
+          workflow_file_name: update-application.yaml
+          client_payload: |
+            {
+              "cluster": 
+              "dev-ga", 
+              "app_name": "${{ github.event.repository.name }}", 
+              "image_tag": "${{ github.sha }}" 
+            }
