@@ -60,27 +60,10 @@ jobs:
     runs-on: x1-core
     steps:
 
-      - name: Get GH app token
-        id: gh-app-token
-        uses: cloudbeds/composite-actions/gh-app-token@v2
-        with:
-          # replace <argocd-replace-with-your-repo> with the name of the argocd-repo that deploys your app
-          repositories: >-
-            ["<argocd-replace-with-your-repo>"]
-          # replace <placeholders with your project/squad GH app details>
-          app_name: <github-app-name>
-
       - name: Update application on develop cluster
-        uses: cloudbeds/trigger-workflow-and-wait@v1.6.5
+        uses: cloudbeds/composite-actions/argocd/trigger-update-app@v2
         with:
-          owner: cloudbeds
-          repo: argo-${REPLACE_ME_WITH_YOUR_ARGO}
-          github_token: ${{ steps.gh-app-token.outputs.github-token }}
-          workflow_file_name: update-application.yaml
-          client_payload: |
-            {
-              "cluster": 
-              "dev-ga", 
-              "app_name": "${{ github.event.repository.name }}", 
-              "image_tag": "${{ github.sha }}" 
-            }
+          repo: cloudbeds/argo-${REPLACE_ME_WITH_YOUR_ARGO}
+          app-name: ${{ github.event.repository.name }}
+          cluster: dev-ga
+          image-tag: ${{ github.sha }}
