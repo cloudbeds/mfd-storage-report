@@ -58,6 +58,9 @@ jobs:
     name: Update Deployment Manifest Image Tag 📜
     needs: build-push
     runs-on: x1-core
+    permissions:
+      id-token: write
+      contents: read
     steps:
 
       - name: Update application on develop cluster
