@@ -28,4 +28,5 @@ jobs:
       - name: Docker build
         uses: cloudbeds/composite-actions/docker/build-push/remote@v2
         with:
+          platforms: linux/arm64
           push: ${{ inputs.push }}
